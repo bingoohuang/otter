@@ -16,7 +16,6 @@
 
 package com.alibaba.otter.manager.biz.remote.impl;
 
-import java.text.MessageFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -58,26 +57,15 @@ public class NodeMBeanServiceImpl implements NodeRemoteService {
 
             public MBeanServerConnection apply(Long nid) {
                 Node node = nodeService.findById(nid);
-                String ip = node.getIp();
-                if (node.getParameters().getUseExternalIp()) {
-                    ip = node.getParameters().getExternalIp();
-                }
-
-                int port = node.getPort().intValue() + 1;
-                Integer mbeanPort = node.getParameters().getMbeanPort();
-                if (mbeanPort != null && mbeanPort != 0) {// 做个兼容处理，<=4.2.2版本没有mbeanPort设置
-                    port = mbeanPort;
-                }
+                String nodeServiceURL = node.createServiceURL();
 
                 try {
-                    JMXServiceURL serviceURL = new JMXServiceURL(MessageFormat.format(SERVICE_URL,
-                        ip,
-                        String.valueOf(port)));
+                    JMXServiceURL serviceURL = new JMXServiceURL(nodeServiceURL);
                     JMXConnector cntor = JMXConnectorFactory.connect(serviceURL, null);
                     MBeanServerConnection mbsc = cntor.getMBeanServerConnection();
                     return mbsc;
                 } catch (Exception e) {
-                    throw new ManagerException(e);
+                    throw new ManagerException("failed to connect to " + nodeServiceURL, e);
                 }
             }
 

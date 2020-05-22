@@ -17,6 +17,7 @@
 package com.alibaba.otter.shared.common.model.config.node;
 
 import java.io.Serializable;
+import java.text.MessageFormat;
 import java.util.Date;
 
 import org.apache.commons.lang.builder.ToStringBuilder;
@@ -148,4 +149,15 @@ public class Node implements Serializable {
         return result;
     }
 
+  private static final String SERVICE_URL = "service:jmx:rmi://{0}/jndi/rmi://{0}:{1}/mbean";
+
+  public String createServiceURL() {
+    String nodeIp = parameters.getUseExternalIp() ? parameters.getExternalIp() : ip;
+
+    Integer mbeanPort = parameters.getMbeanPort();
+    // 做个兼容处理，<=4.2.2版本没有mbeanPort设置
+    int nodePort = mbeanPort != null && mbeanPort != 0 ? mbeanPort : port.intValue() + 1;
+
+    return MessageFormat.format(SERVICE_URL, nodeIp, String.valueOf(nodePort));
+  }
 }
